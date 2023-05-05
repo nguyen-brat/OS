@@ -95,7 +95,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
 
   fpit->fp_next = frames;
 
-  /* TODO map range of frame to address space 
+  /* TODO map range of frame to address space
    *      [addr to addr + pgnum*PAGING_PAGESZ
    *      in page table caller->mm->pgd[]
    */
@@ -115,7 +115,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
  * @frm_lst   : frame list
  */
 
-int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struct** frm_lst)
+int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struct** frm_lst) // allocate content to physical disk
 {
   int pgit, fpn;
   //struct framephy_struct *newfp_str;
@@ -124,9 +124,12 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
   {
     if(MEMPHY_get_freefp(caller->mram, &fpn) == 0)
    {
+     // There must be a fucking TODO here why the fuck she dont put it here
      
-   } else {  // ERROR CODE of obtaining somes but not enough frames
-   } 
+
+   } else {  // ERROR CODE of obtaining somes but not enough frames maybe there must be a TODO here !
+    perror("Got error when try to allocate memory ram beacause not enough ram"); // when not enough memory ram it return -3000 ?
+   }
  }
 
   return 0;
@@ -154,7 +157,7 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
    *in endless procedure of swap-off to get frame and we have not provide 
    *duplicate control mechanism, keep it simple
    */
-  ret_alloc = alloc_pages_range(caller, incpgnum, &frm_lst);
+  ret_alloc = alloc_pages_range(caller, incpgnum, &frm_lst); // return 0 if successfull
 
   if (ret_alloc < 0 && ret_alloc != -3000)
     return -1;

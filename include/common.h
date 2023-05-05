@@ -47,9 +47,9 @@ struct code_seg_t {
 struct trans_table_t {
 	/* A row in the page table of the second layer */
 	struct  {
-		addr_t v_index; // The index of virtual address
-		addr_t p_index; // The index of physical address
-	} table[1 << SECOND_LV_LEN];
+		addr_t v_index; // The index of virtual address (it is interger number addr_t is uint32_t)
+		addr_t p_index; // The index of physical address (it is interger number addr_t is uint32_t)
+	} table[1 << SECOND_LV_LEN]; // size of this table is 2^second_lv_len
 	int size;
 };
 
@@ -59,7 +59,7 @@ struct page_table_t {
 	struct {
 		addr_t v_index;	// Virtual index
 		struct trans_table_t * next_lv;
-	} table[1 << FIRST_LV_LEN];
+	} table[1 << FIRST_LV_LEN]; // crreate a table array with size 2^FIRST_LV_LEN
 	int size;	// Number of row in the first layer
 };
 

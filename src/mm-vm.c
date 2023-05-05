@@ -44,7 +44,7 @@ struct vm_area_struct *get_vma_by_num(struct mm_struct *mm, int vmaid)
 
   int vmait = 0;
   
-  while (vmait < vmaid)
+  while (vmait < vmaid) // what the fuck is this why vmait is equal 0
   {
     if(pvma == NULL)
 	  return NULL;
@@ -62,7 +62,7 @@ struct vm_area_struct *get_vma_by_num(struct mm_struct *mm, int vmaid)
  */
 struct vm_rg_struct *get_symrg_byid(struct mm_struct *mm, int rgid)
 {
-  if(rgid < 0 || rgid > PAGING_MAX_SYMTBL_SZ)
+  if(rgid < 0 || rgid > PAGING_MAX_SYMTBL_SZ) // PAGING_MAX_SYMTBL_SZ define in os-mm.h = 30 it mean max regester each process has
     return NULL;
 
   return &mm->symrgtbl[rgid];
@@ -81,7 +81,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   /*Allocate at the toproof */
   struct vm_rg_struct rgnode;
 
-  if (get_free_vmrg_area(caller, vmaid, size, &rgnode) == 0)
+  if (get_free_vmrg_area(caller, vmaid, size, &rgnode) == 0) // rgnode is region in physycal memory
   {
     caller->mm->symrgtbl[rgid].rg_start = rgnode.rg_start;
     caller->mm->symrgtbl[rgid].rg_end = rgnode.rg_end;
@@ -91,11 +91,14 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
     return 0;
   }
 
-  /* TODO get_free_vmrg_area FAILED handle the region management (Fig.6)*/
+  /* TODO get_free_vmrg_area FAILED handle the region management (Fig.6)
+  Dont need to do anything here because all done
+  */
+  // return -1 mean no free region
 
   /*Attempt to increate limit to get space */
-  struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
-  int inc_sz = PAGING_PAGE_ALIGNSZ(size);
+  struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid); // can ignore this because we just have one vm area
+  int inc_sz = PAGING_PAGE_ALIGNSZ(size); // round to the nearest up multiply of 256
   //int inc_limit_ret
   int old_sbrk ;
 
@@ -119,9 +122,10 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
  *@caller: caller
  *@vmaid: ID vm area to alloc memory region
  *@rgid: memory region ID (used to identify variable in symbole table)
- *@size: allocated size 
+ *@size: allocated size (this fucing variable not in the variable what the fuck is this source code)
  *
  */
+// this function should be add new region to free register and remove a element in symrgtbl in mm_struct
 int __free(struct pcb_t *caller, int vmaid, int rgid)
 {
   struct vm_rg_struct rgnode;
@@ -133,6 +137,10 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   rgnode = *caller->mm->mmap->vm_freerg_list;
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
+  // free register in symrgtbl
+  for (int i = rgid; i<PAGING_MAX_SYMTBL_SZ - 1; i++){
+    caller->mm->symrgtbl[i] = caller->mm->symrgtbl[i+1];
+  }
 
   return 0;
 }
@@ -211,7 +219,7 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 
 /*pg_getval - read value at given offset
  *@mm: memory region
- *@addr: virtual address to acess 
+ *@addr: virtual address to acess
  *@value: value
  *
  */
@@ -397,7 +405,7 @@ struct vm_rg_struct* get_vm_area_node_at_brk(struct pcb_t *caller, int vmaid, in
  *@vmaend: vma end
  *
  */
-int validate_overlap_vm_area(struct pcb_t *caller, int vmaid, int vmastart, int vmaend)
+int validate_overlap_vm_area(struct pcb_t *caller, int vmaid, int vmastart, int vmaend) // this shit really need to do
 {
   //struct vm_area_struct *vma = caller->mm->mmap;
 
@@ -406,7 +414,7 @@ int validate_overlap_vm_area(struct pcb_t *caller, int vmaid, int vmastart, int 
   return 0;
 }
 
-/*inc_vma_limit - increase vm area limits to reserve space for new variable
+/*inc_vma_limit - increase vm area limits to reserve space for new variable and fucking map it to RAM
  *@caller: caller
  *@vmaid: ID vm area to alloc memory region
  *@inc_sz: increment size 
@@ -415,8 +423,8 @@ int validate_overlap_vm_area(struct pcb_t *caller, int vmaid, int vmastart, int 
 int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
 {
   struct vm_rg_struct * newrg = malloc(sizeof(struct vm_rg_struct));
-  int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
-  int incnumpage =  inc_amt / PAGING_PAGESZ;
+  int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz); // round up to nearest multiply of 256
+  int incnumpage =  inc_amt / PAGING_PAGESZ; // find number of page by divide by 256
   struct vm_rg_struct *area = get_vm_area_node_at_brk(caller, vmaid, inc_sz, inc_amt);
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
 
@@ -426,7 +434,7 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   if (validate_overlap_vm_area(caller, vmaid, area->rg_start, area->rg_end) < 0)
     return -1; /*Overlap and failed allocation */
 
-  /* The obtained vm area (only) 
+  /* The obtained vm area (only)
    * now will be alloc real ram region */
   cur_vma->vm_end += inc_sz;
   if (vm_map_ram(caller, area->rg_start, area->rg_end, 

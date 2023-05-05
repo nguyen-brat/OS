@@ -7,12 +7,16 @@
 #include "mm.h"
 #include <stdlib.h>
 
-/*
+/*  
  *  MEMPHY_mv_csr - move MEMPHY cursor
  *  @mp: memphy struct
  *  @offset: offset
  */
-int MEMPHY_mv_csr(struct memphy_struct *mp, int offset)
+/*
+MEMPHY_mv_csr: This function moves the cursor of a memphy_struct to the specified offset index. 
+The command line syntax is: MEMPHY_mv_csr <memphy_struct> <offset>
+*/
+int MEMPHY_mv_csr(struct memphy_struct *mp, int offset) // move cursor to offset index
 {
    int numstep = 0;
 
@@ -32,12 +36,16 @@ int MEMPHY_mv_csr(struct memphy_struct *mp, int offset)
  *  @addr: address
  *  @value: obtained value
  */
-int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value)
+/*
+MEMPHY_seq_read: This function reads the value at the specified address in the memphy_struct when it is in sequential access mode. 
+The command line syntax is: MEMPHY_seq_read <memphy_struct> <addr> <value>
+*/
+int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value) // assign the value in addr in mp to value
 {
    if (mp == NULL)
      return -1;
 
-   if (!mp->rdmflg)
+   if (!mp->rdmflg) // rdmflg define random access or serial
      return -1; /* Not compatible mode for sequential read */
 
    MEMPHY_mv_csr(mp, addr);
@@ -52,6 +60,12 @@ int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value)
  *  @addr: address
  *  @value: obtained value
  */
+/*
+MEMPHY_read: This function reads the value at the specified address in the memphy_struct. 
+If it is in sequential access mode, it calls MEMPHY_seq_read
+Otherwise, it directly reads from the storage. 
+The command line syntax is: MEMPHY_read <memphy_struct> <addr> <value>
+*/
 int MEMPHY_read(struct memphy_struct * mp, int addr, BYTE *value)
 {
    if (mp == NULL)
@@ -71,6 +85,10 @@ int MEMPHY_read(struct memphy_struct * mp, int addr, BYTE *value)
  *  @addr: address
  *  @data: written data
  */
+/*
+MEMPHY_seq_write: This function writes the specified data to the address in the memphy_struct when it is in sequential access mode. 
+The command line syntax is: MEMPHY_seq_write <memphy_struct> <addr> <data>
+*/
 int MEMPHY_seq_write(struct memphy_struct * mp, int addr, BYTE value)
 {
 
@@ -92,6 +110,11 @@ int MEMPHY_seq_write(struct memphy_struct * mp, int addr, BYTE value)
  *  @addr: address
  *  @data: written data
  */
+/*
+MEMPHY_write: This function writes the specified data to the address in the memphy_struct. 
+If it is in sequential access mode, it calls MEMPHY_seq_write. Otherwise, it directly writes to the storage. 
+The command line syntax is: MEMPHY_write <memphy_struct> <addr> <data>
+*/
 int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
 {
    if (mp == NULL)
@@ -109,6 +132,10 @@ int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
  *  MEMPHY_format-format MEMPHY device
  *  @mp: memphy struct
  */
+/*
+MEMPHY_format: This function formats the memphy_struct by setting up the free frame list for the specified page size. 
+The command line syntax is: MEMPHY_format <memphy_struct> <page_size>
+*/
 int MEMPHY_format(struct memphy_struct *mp, int pagesz)
 {
     /* This setting come with fixed constant PAGESZ */
@@ -136,7 +163,10 @@ int MEMPHY_format(struct memphy_struct *mp, int pagesz)
 
     return 0;
 }
-
+/*
+MEMPHY_get_freefp: This function returns the first free frame from the free frame list of the memphy_struct. 
+The command line syntax is: MEMPHY_get_freefp <memphy_struct> <retfpn>
+*/
 int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
 {
    struct framephy_struct *fp = mp->free_fp_list;
@@ -147,23 +177,29 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
    *retfpn = fp->fpn;
    mp->free_fp_list = fp->fp_next;
 
-   /* MEMPHY is iteratively used up until its exhausted
+   /* MEMPHY is iteratively used up until its exhausted TODO here
     * No garbage collector acting then it not been released
     */
    free(fp);
 
    return 0;
 }
-
-int MEMPHY_dump(struct memphy_struct * mp)
+/*
+MEMPHY_dump: This function dumps the content of the memphy_struct. 
+The command line syntax is: MEMPHY_dump <memphy_struct>
+*/
+int MEMPHY_dump(struct memphy_struct * mp) // is dump is print all content of memory ?
 {
     /*TODO dump memphy contnt mp->storage 
      *     for tracing the memory content
      */
-    
+    printf("%s\n", mp->storage);
     return 0;
 }
-
+/*
+MEMPHY_put_freefp: This function puts the specified free frame number to the free frame list of the memphy_struct. 
+The command line syntax is: MEMPHY_put_freefp <memphy_struct> <fpn>
+*/
 int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
 {
    struct framephy_struct *fp = mp->free_fp_list;
@@ -181,6 +217,10 @@ int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
 /*
  *  Init MEMPHY struct
  */
+/*
+init_memphy: This function initializes the memphy_struct. 
+The command line syntax is: init_memphy <memphy_struct> <max_size> <randomfl
+*/
 int init_memphy(struct memphy_struct *mp, int max_size, int randomflg)
 {
    mp->storage = (BYTE *)malloc(max_size*sizeof(BYTE));

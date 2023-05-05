@@ -11,7 +11,7 @@ typedef uint32_t addr_t;
 
 struct pgn_t{
    int pgn;
-   struct pgn_t *pg_next; 
+   struct pgn_t *pg_next;
 };
 
 /*
@@ -21,7 +21,7 @@ struct vm_rg_struct {
    unsigned long rg_start;
    unsigned long rg_end;
 
-   struct vm_rg_struct *rg_next;
+   struct vm_rg_struct *rg_next; // link list structure
 };
 
 /*
@@ -38,7 +38,7 @@ struct vm_area_struct {
  * unsigned long vm_limit = vm_end - vm_start
  */
    struct mm_struct *vm_mm;
-   struct vm_rg_struct *vm_freerg_list;
+   struct vm_rg_struct *vm_freerg_list; // store free memory region in a linklist this is the head
    struct vm_area_struct *vm_next;
 };
 
@@ -60,21 +60,21 @@ struct mm_struct {
 /*
  * FRAME/MEM PHY struct
  */
-struct framephy_struct { 
+struct framephy_struct {
    int fpn;
    struct framephy_struct *fp_next;
 
-   /* Resereed for tracking allocated framed */
+   /* Resereed for tracking allocated framed by virtual memory*/
    struct mm_struct* owner;
 };
 
 struct memphy_struct {
    /* Basic field of data and size */
-   BYTE *storage;
+   BYTE *storage; // BYTE is char storage maybe a string
    int maxsz;
    
    /* Sequential device fields */ 
-   int rdmflg;
+   int rdmflg; // defines the memory access is randomly or serially access
    int cursor;
 
    /* Management structure */

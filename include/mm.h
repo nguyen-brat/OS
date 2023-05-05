@@ -8,6 +8,11 @@
 #define PAGING_PAGESZ  256      /* 256B or 8-bits PAGE NUMBER */
 #define PAGING_MEMRAMSZ BIT(10) /* 1MB */
 #define PAGING_PAGE_ALIGNSZ(sz) (DIV_ROUND_UP(sz,PAGING_PAGESZ)*PAGING_PAGESZ)
+/*
+In this code, `PAGING_PAGE_ALIGNSZ(sz)` is a macro that takes a size `sz` and aligns it to the nearest multiple of `PAGING_PAGESZ`, which is defined to be 256. 
+The macro calculates the number of pages required to accommodate `sz` by dividing `sz` by `PAGING_PAGESZ` and rounding up to the nearest integer using `DIV_ROUND_UP()`, a macro defined in `common.h`. It then multiplies the result by `PAGING_PAGESZ` to get the aligned size.
+For example, if `sz` is 500, `PAGING_PAGE_ALIGNSZ(sz)` would return 512, which is the nearest multiple of 256.
+*/
 
 #define PAGING_MEMSWPSZ BIT(14) /* 16MB */
 #define PAGING_SWPFPN_OFFSET 5  
