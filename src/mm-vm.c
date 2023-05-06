@@ -35,7 +35,7 @@ int enlist_vm_freerg_list(struct mm_struct *mm, struct vm_rg_struct rg_elmt)
  *@vmaid: ID vm area to alloc memory region
  *
  */
-struct vm_area_struct *get_vma_by_num(struct mm_struct *mm, int vmaid)
+struct vm_area_struct *get_vma_by_num(struct mm_struct *mm, int vmaid) //useless function
 {
   struct vm_area_struct *pvma= mm->mmap;
 
@@ -46,6 +46,7 @@ struct vm_area_struct *get_vma_by_num(struct mm_struct *mm, int vmaid)
   
   while (vmait < vmaid) // what the fuck is this why vmait is equal 0
   {
+    vmait++;
     if(pvma == NULL)
 	  return NULL;
 
@@ -55,7 +56,7 @@ struct vm_area_struct *get_vma_by_num(struct mm_struct *mm, int vmaid)
   return pvma;
 }
 
-/*get_symrg_byid - get mem region by region ID
+/*get_symrg_byid - get mem region (register) by region ID in symrgtbl
  *@mm: memory region
  *@rgid: region ID act as symbol index of variable
  *
@@ -126,15 +127,15 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
  *
  */
 // this function should be add new region to free register and remove a element in symrgtbl in mm_struct
-int __free(struct pcb_t *caller, int vmaid, int rgid)
+int __free(struct pcb_t *caller, int vmaid, int rgid) //vmaid is the id of big virtual memory area but in this project there is 1 vm so you don't need to care about it
 {
   struct vm_rg_struct rgnode;
 
   if(rgid < 0 || rgid > PAGING_MAX_SYMTBL_SZ)
     return -1;
 
-  /* TODO: Manage the collect freed region to freerg_list */
-  rgnode = *caller->mm->mmap->vm_freerg_list;
+  /* TODO: Manage the collect free region to freerg_list */
+  rgnode = *caller->mm[rgid];
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
   // free register in symrgtbl
@@ -381,7 +382,7 @@ int free_pcb_memph(struct pcb_t *caller)
  *@caller: caller
  *@vmaid: ID vm area to alloc memory region
  *@incpgnum: number of page
- *@vmastart: vma end
+ *@vmastart: vma start
  *@vmaend: vma end
  *
  */
@@ -453,11 +454,11 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
 int find_victim_page(struct mm_struct *mm, int *retpgn) 
 {
   struct pgn_t *pg = mm->fifo_pgn;
-
+  if(!pg) return -1;  
   /* TODO: Implement the theorical mechanism to find the victim page */
-
+  *retpgn = pg->pgn;
+  mm->fifo_pgn = pg->pg_next;
   free(pg);
-
   return 0;
 }
 
