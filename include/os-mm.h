@@ -78,8 +78,8 @@ struct memphy_struct {
    int cursor;
 
    /* Management structure */
-   struct framephy_struct *free_fp_list;
-   struct framephy_struct *used_fp_list;
+   struct framephy_struct *free_fp_list; //link list store head
+   struct framephy_struct *used_fp_list; // link list store head
 };
 
 #endif

@@ -84,8 +84,8 @@ It returns 0 on success.
 */
 int pte_set_fpn(uint32_t *pte, int fpn)
 {
-  SETBIT(*pte, PAGING_PTE_PRESENT_MASK);
-  CLRBIT(*pte, PAGING_PTE_SWAPPED_MASK);
+  SETBIT(*pte, PAGING_PTE_PRESENT_MASK); // set present bit to one
+  CLRBIT(*pte, PAGING_PTE_SWAPPED_MASK); // set swap bit to zero swap bit indicate is it in swap disk
 
   SETVAL(*pte, fpn, PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT); 
 
@@ -98,7 +98,9 @@ int pte_set_fpn(uint32_t *pte, int fpn)
  */
 /*
 This function is used to map a range of pages to physical frames in memory. 
-It takes a pointer to the process control block (caller), the start address of the page range (addr), the number of pages in the range (pgnum), a list of physical frames (frames), and a return value ret_rg to hold the mapped region information. 
+It takes a pointer to the process control block (caller), the start address of the page range (addr), 
+the number of pages in the range (pgnum), a list of physical frames (frames), 
+and a return value ret_rg to hold the mapped region information. 
 The function maps the pages to frames and updates the page table accordingly. It returns 0 on success.
 */
 int vmap_page_range(struct pcb_t *caller, // process call
@@ -121,11 +123,16 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      [addr to addr + pgnum*PAGING_PAGESZ]
    *      in page table caller->mm->pgd[]
    */
-  
+  for (pgit = 0; pgit<pgnum; pgit++){
+    caller->mm->pgd[pgn+pgit] = frames[pgit].fpn;
+    frames[pgit].owner = caller->mm;
+    frames[pgit].fp_next = caller->mram->used_fp_list; // add this phyframe to used fram list
+    caller->mram->used_fp_list = &frames[pgit]; // add this phyframe to used fram list
    /* Tracking for later page replacement activities (if needed)
     * Enqueue new usage page */
-   enlist_pgn_node(&caller->mm->fifo_pgn, pgn+pgit);
-
+    enlist_pgn_node(&caller->mm->fifo_pgn, pgn+pgit);
+    ret_rg->rg_end += PAGING_PAGESZ;
+  }
 
   return 0;
 }
@@ -142,11 +149,27 @@ It takes a pointer to the process control block (caller), the requested number o
 and a pointer to a list of physical frames (frm_lst).
 The function allocates the required frames and updates the page table accordingly. It returns 0 on success.
 */
+struct framephy_struct* dequeue_last_frame(struct memphy_struct* phyframe){ // move last pointer in use fp to free fp, return the fpn of last frame
+  if (phyframe->used_fp_list->fp_next == NULL){
+    struct framephy_struct* result = phyframe->used_fp_list;
+    phyframe->used_fp_list = NULL;
+    return result;
+  }
+  struct framephy_struct* pointer = phyframe->used_fp_list;
+  while (pointer->fp_next->fp_next != NULL)
+    pointer = pointer->fp_next; // move to the near last pointer
+  struct framephy_struct* result = pointer->fp_next; // take fpn of the last pointer
+  // pointer->fp_next->fp_next = phyframe->free_fp_list; // add last pointer to free list
+  // phyframe->free_fp_list = pointer->fp_next->fp_next; // make last pointer is the head
+  pointer->fp_next = NULL; // set near last pointer next to null
+  return result;
+}
+
 int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struct** frm_lst) // allocate content to physical disk
 { // if both ram and swap full return -1 if only ram full return -3000
   int pgit, fpn;
   //struct framephy_struct *newfp_str;
-  frm_lst = malloc(req_pgnum*sizeof(struct framephy_struct));
+  frm_lst = malloc(req_pgnum*sizeof(struct framephy_struct*));
   for(pgit = 0; pgit < req_pgnum; pgit++)
   {
     if(MEMPHY_get_freefp(caller->mram, &fpn) == 0)
@@ -156,10 +179,19 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
      alloc_new_frame->fpn = fpn;
      alloc_new_frame->owner = caller->mm;
      frm_lst[pgit] = alloc_new_frame;
-     if (pgit > 0) frm_lst[pgit-1]->fp_next = alloc_new_frame;
+     //if (pgit > 0) frm_lst[pgit-1]->fp_next = alloc_new_frame;
    } else {  // ERROR CODE of obtaining somes but not enough frames maybe there must be a TODO here !
             // push data from ram to swap to have empty page. and store data.
-      
+      if(MEMPHY_get_freefp(caller->active_mswp, &fpn) == 0){
+        // swap memory from ram to swap
+        struct framephy_struct* remove_frame_ram = dequeue_last_frame(caller->mram->used_fp_list);
+        frm_lst[pgit] = remove_frame_ram;
+        __swap_cp_page(caller->mram, remove_frame_ram->fpn, caller->active_mswp, fpn);
+        struct framephy_struct* remove_frame_swap = malloc(sizeof(struct framephy_struct));
+        remove_frame_swap->fpn = fpn;
+        remove_frame_swap->fp_next = caller->active_mswp->free_fp_list;
+        caller->active_mswp->free_fp_list = remove_frame_swap;
+      } else return -1;
    }
  }
 
