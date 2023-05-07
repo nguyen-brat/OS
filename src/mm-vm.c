@@ -135,7 +135,7 @@ int __free(struct pcb_t *caller, int vmaid, int rgid) //vmaid is the id of big v
     return -1;
 
   /* TODO: Manage the collect free region to freerg_list */
-  rgnode = *caller->mm[rgid];
+  rgnode = caller->mm->symrgtbl[rgid];
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
   // free register in symrgtbl
