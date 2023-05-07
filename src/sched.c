@@ -48,7 +48,7 @@ struct pcb_t * get_mlq_proc(void) {
 	 * Remember to use lock to protect the queue.
 	 * */
 	pthread_mutex_lock(&queue_lock);
-	proc = dequeue(&mlq_ready_queue[proc->prio], proc);
+	proc = dequeue(&mlq_ready_queue[proc->prio]);
 	pthread_mutex_unlock(&queue_lock);	
 	return proc;	
 }
