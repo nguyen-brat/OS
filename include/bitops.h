@@ -7,7 +7,7 @@
 #define BITS_PER_BYTE           8
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 
-#define BIT(nr)                 (1U << (nr))
+#define BIT(nr)                 (1U << (nr)) // 2^nr
 #define BIT_ULL(nr)             (1ULL << (nr))
 #define BIT_MASK(nr)            (1UL << ((nr) % BITS_PER_LONG))
 #define BIT_WORD(nr)            ((nr) / BITS_PER_LONG)
@@ -32,6 +32,6 @@
 #define NBITS8(n) ((n&0xF0)?(4+NBITS4(n>>4)):(NBITS4(n)))
 #define NBITS16(n) ((n&0xFF00)?(8+NBITS8(n>>8)):(NBITS8(n)))
 #define NBITS32(n) ((n&0xFFFF0000)?(16+NBITS16(n>>16)):(NBITS16(n)))
-#define NBITS(n) (n==0?0:NBITS32(n))
+#define NBITS(n) (n==0?0:NBITS32(n)) // count need how many bit to represent n. in some set from 0 1 3 7 15 31
 
 #define EXTRACT_NBITS(nr, h, l) ((nr&GENMASK(h,l)) >> l)

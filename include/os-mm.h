@@ -46,7 +46,7 @@ struct vm_area_struct {
  * Memory management struct
  */
 struct mm_struct {
-   uint32_t *pgd;
+   uint32_t *pgd; // manage the virtual memory it map virtual to disk. pgd[index] = value. index is page and value is adress (offset+frame)
 
    struct vm_area_struct *mmap;
 
@@ -54,7 +54,7 @@ struct mm_struct {
    struct vm_rg_struct symrgtbl[PAGING_MAX_SYMTBL_SZ];
 
    /* list of free page */
-   struct pgn_t *fifo_pgn;
+   struct pgn_t *fifo_pgn; // manage the order of pgn
 };
 
 /*
@@ -70,8 +70,8 @@ struct framephy_struct {
 
 struct memphy_struct {
    /* Basic field of data and size */
-   BYTE *storage; // BYTE is char storage maybe a string
-   int maxsz;
+   BYTE *storage; // BYTE is char storage maybe a string it is a array in size is maxsz
+   int maxsz; // at begin it have int(maxsz/PAGINGSZ) frame
    
    /* Sequential device fields */ 
    int rdmflg; // defines the memory access is randomly or serially access

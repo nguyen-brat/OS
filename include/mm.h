@@ -20,7 +20,7 @@ For example, if `sz` is 500, `PAGING_PAGE_ALIGNSZ(sz)` would return 512, which i
 
 #define PAGING_SBRK_INIT_SZ PAGING_PAGESZ
 /* PTE BIT */
-#define PAGING_PTE_PRESENT_MASK BIT(31) 
+#define PAGING_PTE_PRESENT_MASK BIT(31) //2^31 (100...00) 32 bit
 #define PAGING_PTE_SWAPPED_MASK BIT(30)
 #define PAGING_PTE_RESERVE_MASK BIT(29)
 #define PAGING_PTE_DIRTY_MASK BIT(28)
@@ -29,7 +29,7 @@ For example, if `sz` is 500, `PAGING_PAGE_ALIGNSZ(sz)` would return 512, which i
 
 /* PTE BIT PRESENT */
 #define PAGING_PTE_SET_PRESENT(pte) (pte=pte|PAGING_PTE_PRESENT_MASK)
-#define PAGING_PAGE_PRESENT(pte) (pte&PAGING_PTE_PRESENT_MASK)
+#define PAGING_PAGE_PRESENT(pte) (pte&PAGING_PTE_PRESENT_MASK) // if the highst bit in 32 bit is 1 return 1 else 0
 
 /* USRNUM */
 #define PAGING_PTE_USRNUM_LOBIT 15
@@ -55,11 +55,11 @@ For example, if `sz` is 500, `PAGING_PAGE_ALIGNSZ(sz)` would return 512, which i
 #define PAGING_ADDR_OFFST_HIBIT (NBITS(PAGING_PAGESZ) - 1)
 
 /* PAGE Num */
-#define PAGING_ADDR_PGN_LOBIT NBITS(PAGING_PAGESZ)
+#define PAGING_ADDR_PGN_LOBIT NBITS(PAGING_PAGESZ) //number of bit need to store paging_pagez - 1
 #define PAGING_ADDR_PGN_HIBIT (PAGING_CPU_BUS_WIDTH - 1)
 
 /* Frame PHY Num */
-#define PAGING_ADDR_FPN_LOBIT NBITS(PAGING_PAGESZ)
+#define PAGING_ADDR_FPN_LOBIT NBITS(PAGING_PAGESZ) //number of bit need to store paging_pagez - 1
 #define PAGING_ADDR_FPN_HIBIT (NBITS(PAGING_MEMRAMSZ) - 1)
 
 /* SWAPFPN */
@@ -77,7 +77,7 @@ For example, if `sz` is 500, `PAGING_PAGE_ALIGNSZ(sz)` would return 512, which i
 /* Masks */
 #define PAGING_OFFST_MASK  GENMASK(PAGING_ADDR_OFFST_HIBIT,PAGING_ADDR_OFFST_LOBIT)
 #define PAGING_PGN_MASK  GENMASK(PAGING_ADDR_PGN_HIBIT,PAGING_ADDR_PGN_LOBIT)
-#define PAGING_FPN_MASK  GENMASK(PAGING_ADDR_FPN_HIBIT,PAGING_ADDR_FPN_LOBIT)
+#define PAGING_FPN_MASK  GENMASK(PAGING_ADDR_FPN_HIBIT,PAGING_ADDR_FPN_LOBIT) // zero out high bit and low bit one in other
 #define PAGING_SWP_MASK  GENMASK(PAGING_SWP_HIBIT,PAGING_SWP_LOBIT)
 
 /* Extract OFFSET */
@@ -86,7 +86,7 @@ For example, if `sz` is 500, `PAGING_PAGE_ALIGNSZ(sz)` would return 512, which i
 /* Extract Page Number*/
 #define PAGING_PGN(x)  GETVAL(x,PAGING_PGN_MASK,PAGING_ADDR_PGN_LOBIT)
 /* Extract FramePHY Number*/
-#define PAGING_FPN(x)  GETVAL(x,PAGING_FPN_MASK,PAGING_ADDR_FPN_LOBIT)
+#define PAGING_FPN(x)  GETVAL(x,PAGING_FPN_MASK,PAGING_ADDR_FPN_LOBIT) // convert adress to frame
 /* Extract SWAPFPN */
 #define PAGING_PGN(x)  GETVAL(x,PAGING_PGN_MASK,PAGING_ADDR_PGN_LOBIT)
 /* Extract SWAPTYPE */
