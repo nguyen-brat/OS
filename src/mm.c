@@ -184,7 +184,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
             // push data from ram to swap to have empty page. and store data.
       if(MEMPHY_get_freefp(caller->active_mswp, &fpn) == 0){
         // swap memory from ram to swap
-        struct framephy_struct* remove_frame_ram = dequeue_last_frame(caller->mram->used_fp_list);
+        struct framephy_struct* remove_frame_ram = dequeue_last_frame(caller->mram);
         frm_lst[pgit] = remove_frame_ram;
         __swap_cp_page(caller->mram, remove_frame_ram->fpn, caller->active_mswp, fpn);
         struct framephy_struct* remove_frame_swap = malloc(sizeof(struct framephy_struct));
