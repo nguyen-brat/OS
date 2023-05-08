@@ -57,7 +57,7 @@ struct trans_table_t {
 struct page_table_t {
 	/* Translation table for the first layer */
 	struct {
-		addr_t v_index;	// Virtual index
+		addr_t v_index;	// Virtual index id of 
 		struct trans_table_t * next_lv;
 	} table[1 << FIRST_LV_LEN]; // crreate a table array with size 2^FIRST_LV_LEN
 	int size;	// Number of row in the first layer

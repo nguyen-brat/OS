@@ -177,17 +177,18 @@ int pgfree_data(struct pcb_t *proc, uint32_t reg_index)
  *@caller: caller
  *
  */
+// TODO
 int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 {
   uint32_t pte = mm->pgd[pgn];
  
-  if (!PAGING_PAGE_PRESENT(pte))
+  if (!PAGING_PAGE_PRESENT(pte)) // if bit 32 in pte is 1 return true else false
   { /* Page is not online, make it actively living */
     int vicpgn, swpfpn; 
     //int vicfpn;
     //uint32_t vicpte;
 
-    int tgtfpn = PAGING_SWP(pte);//the target frame storing our variable
+    int tgtfpn = PAGING_SWP(pte);//get frame from adress in pte
 
     /* TODO: Play with your paging theory here */
     /* Find victim page */
@@ -357,9 +358,12 @@ int pgwrite(
  */
 int free_pcb_memph(struct pcb_t *caller)
 {
+  /*
+  free all memphy used in caller. It map from virtual to physic frame by using PAGING_FPN for ram
+  and PAGING_SWP for swap
+  */
   int pagenum, fpn;
   uint32_t pte;
-
 
   for(pagenum = 0; pagenum < PAGING_MAX_PGN; pagenum++)
   {
@@ -367,11 +371,11 @@ int free_pcb_memph(struct pcb_t *caller)
 
     if (!PAGING_PAGE_PRESENT(pte))
     {
-      fpn = PAGING_FPN(pte);
+      fpn = PAGING_FPN(pte); // do some shit to convert adress to frame
       MEMPHY_put_freefp(caller->mram, fpn);
     } else {
-      fpn = PAGING_SWP(pte);
-      MEMPHY_put_freefp(caller->active_mswp, fpn);    
+      fpn = PAGING_SWP(pte); // do some shit to convert from adress (offset + frame + ...) to frame
+      MEMPHY_put_freefp(caller->active_mswp, fpn);
     }
   }
 
@@ -410,7 +414,7 @@ int validate_overlap_vm_area(struct pcb_t *caller, int vmaid, int vmastart, int 
 {
   //struct vm_area_struct *vma = caller->mm->mmap;
 
-  /* TODO validate the planned memory area is not overlapped */
+  /*validate the planned memory area is not overlapped */
 
   return 0;
 }
@@ -449,7 +453,7 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
 /*find_victim_page - find victim page
  *@caller: caller
  *@pgn: return page number
- *
+ *@retpgn: page return.
  */
 int find_victim_page(struct mm_struct *mm, int *retpgn) 
 {

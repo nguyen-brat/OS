@@ -48,7 +48,7 @@ int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value) // assign t
    if (!mp->rdmflg) // rdmflg define random access or serial
      return -1; /* Not compatible mode for sequential read */
 
-   MEMPHY_mv_csr(mp, addr);
+   MEMPHY_mv_csr(mp, addr); // just to take time to modify moving pointer in hard disk.
    *value = (BYTE) mp->storage[addr];
 
    return 0;
@@ -167,7 +167,7 @@ int MEMPHY_format(struct memphy_struct *mp, int pagesz)
 MEMPHY_get_freefp: This function returns the first free frame from the free frame list of the memphy_struct. 
 The command line syntax is: MEMPHY_get_freefp <memphy_struct> <retfpn>
 */
-int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
+int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn) // information of freefp pass into retfpn
 {
    struct framephy_struct *fp = mp->free_fp_list;
 
@@ -180,6 +180,7 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
    /* MEMPHY is iteratively used up until its exhausted TODO here
     * No garbage collector acting then it not been released
     */
+
    free(fp);
 
    return 0;
