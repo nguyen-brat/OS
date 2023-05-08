@@ -82,6 +82,7 @@ int run(struct pcb_t * proc) {
 		break;
 	case WRITE:
 #ifdef MM_PAGING
+		printf("here");
 		stat = pgwrite(proc, ins.arg_0, ins.arg_1, ins.arg_2);
 #else
 		stat = write(proc, ins.arg_0, ins.arg_1, ins.arg_2);

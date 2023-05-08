@@ -19,7 +19,7 @@ struct pcb_t * dequeue(struct queue_t * q) {
          * */
         if(empty(q)) return NULL;
         struct pcb_t* result = q->proc[0];
-        for(int i=q->size-1; i>0; i++) q->proc[i-1] = q->proc[i];
+        for(int i=q->size-1; i>0; i--) q->proc[i-1] = q->proc[i];
         q->size--;
 	return result;
 }

@@ -46,10 +46,9 @@ struct vm_area_struct *get_vma_by_num(struct mm_struct *mm, int vmaid)
   
   while (vmait < vmaid)
   {
-    if(pvma == NULL)
-	  return NULL;
-
+    if(pvma == NULL) return NULL;
     pvma = pvma->vm_next;
+    vmait++;
   }
 
   return pvma;
@@ -79,7 +78,7 @@ struct vm_rg_struct *get_symrg_byid(struct mm_struct *mm, int rgid)
 int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr)
 {
   /*Allocate at the toproof */
-  struct vm_rg_struct rgnode;
+  struct vm_rg_struct rgnode; //OK
 
   if (get_free_vmrg_area(caller, vmaid, size, &rgnode) == 0)
   {
@@ -89,25 +88,25 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
     *alloc_addr = rgnode.rg_start;
 
     return 0;
-  }
+  } //OK
 
   /* TODO get_free_vmrg_area FAILED handle the region management (Fig.6)*/
 
-  /*Attempt to increate limit to get space */
-  struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
-  int inc_sz = PAGING_PAGE_ALIGNSZ(size);
+  /*Attempt to increase limit to get space */
+  struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid); //OK
+  int inc_sz = PAGING_PAGE_ALIGNSZ(size); //OK
   //int inc_limit_ret
-  int old_sbrk ;
+  int old_sbrk; //OK
 
-  old_sbrk = cur_vma->sbrk;
+  old_sbrk = cur_vma->sbrk; //OK
 
   /* TODO INCREASE THE LIMIT
    * inc_vma_limit(caller, vmaid, inc_sz)
    */
-  inc_vma_limit(caller, vmaid, inc_sz);
+  inc_vma_limit(caller, vmaid, inc_sz); //OK
 
   /*Successful increase limit */
-  caller->mm->symrgtbl[rgid].rg_start = old_sbrk;
+  caller->mm->symrgtbl[rgid].rg_start = old_sbrk; //OK
   caller->mm->symrgtbl[rgid].rg_end = old_sbrk + size;
 
   *alloc_addr = old_sbrk;
@@ -130,7 +129,7 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     return -1;
 
   /* TODO: Manage the collect freed region to freerg_list */
-  rgnode = *caller->mm->mmap->vm_freerg_list;
+  rgnode = caller->mm->symrgtbl[rgid];
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
 
@@ -190,16 +189,17 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 
     /* Do swap frame from MEMRAM to MEMSWP and vice versa*/
     /* Copy victim frame to swap */
-    //__swap_cp_page();
+    __swap_cp_page(caller->mram, PAGING_FPN(mm->pgd[vicpgn]), caller->active_mswp, swpfpn);
     /* Copy target frame from swap to mem */
-    //__swap_cp_page();
+    __swap_cp_page(caller->active_mswp, tgtfpn, caller->active_mswp, PAGING_FPN(caller->mm->pgd[vicpgn]));
 
     /* Update page table */
     //pte_set_swap() &mm->pgd;
+    pte_set_swap(&mm->pgd[vicpgn], 0, PAGING_SWP(pte));
 
     /* Update its online status of the target page */
     //pte_set_fpn() & mm->pgd[pgn];
-    pte_set_fpn(&pte, tgtfpn);
+    pte_set_fpn(&mm->pgd[pgn], tgtfpn);
 
     enlist_pgn_node(&caller->mm->fifo_pgn,pgn);
   }
@@ -393,7 +393,7 @@ struct vm_rg_struct* get_vm_area_node_at_brk(struct pcb_t *caller, int vmaid, in
 /*validate_overlap_vm_area
  *@caller: caller
  *@vmaid: ID vm area to alloc memory region
- *@vmastart: vma end
+ *@vmastart: vma start
  *@vmaend: vma end
  *
  */
@@ -417,8 +417,8 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   struct vm_rg_struct * newrg = malloc(sizeof(struct vm_rg_struct));
   int inc_amt = PAGING_PAGE_ALIGNSZ(inc_sz);
   int incnumpage =  inc_amt / PAGING_PAGESZ;
-  struct vm_rg_struct *area = get_vm_area_node_at_brk(caller, vmaid, inc_sz, inc_amt);
-  struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
+  struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid); 
+  struct vm_rg_struct *area = get_vm_area_node_at_brk(caller, vmaid, inc_sz, inc_amt); //Create new region node at sbrk 
 
   int old_end = cur_vma->vm_end;
 
@@ -445,11 +445,12 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
 int find_victim_page(struct mm_struct *mm, int *retpgn) 
 {
   struct pgn_t *pg = mm->fifo_pgn;
-
+  if(!pg) return -1;  
   /* TODO: Implement the theorical mechanism to find the victim page */
-
+  while(pg->pg_next) pg = pg->pg_next;
+  *retpgn = pg->pgn;
+  if(mm->fifo_pgn == pg) mm->fifo_pgn = NULL;
   free(pg);
-
   return 0;
 }
 
