@@ -99,7 +99,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
 		pte_set_fpn(&caller->mm->pgd[pgn], fpit->fpn);
 		fpit = fpit->fp_next;
 		addr += PAGING_PAGESZ;
-		ret_rg->rg_end = addr + PAGING_PAGESZ - 1;
+		ret_rg->rg_end = addr + PAGING_PAGESZ;
    	enlist_pgn_node(&caller->mm->fifo_pgn, pgn);
   }
 
@@ -135,6 +135,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       find_victim_page(caller->mm, &vicpgn);
       MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
       __swap_cp_page(caller->mram, PAGING_FPN(caller->mm->pgd[vicpgn]), caller->active_mswp, swpfpn);
+      MEMPHY_put_freefp(caller->mram->free_fp_list, vicpgn);
       pte_set_swap(&caller->mm->pgd[vicpgn], 0, swpfpn);  
       pgit--;
     } 

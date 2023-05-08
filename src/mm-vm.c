@@ -193,6 +193,8 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     /* Copy target frame from swap to mem */
     __swap_cp_page(caller->active_mswp, tgtfpn, caller->active_mswp, PAGING_FPN(caller->mm->pgd[vicpgn]));
 
+    MEMPHY_put_freefp(caller->active_mswp->free_fp_list, tgtfpn);
+
     /* Update page table */
     //pte_set_swap() &mm->pgd;
     pte_set_swap(&mm->pgd[vicpgn], 0, PAGING_SWP(pte));
