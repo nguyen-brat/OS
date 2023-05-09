@@ -1,3 +1,3 @@
 #ifndef FLAG_H
-#define FLAG 0
+#define FLAG 1
 #endif

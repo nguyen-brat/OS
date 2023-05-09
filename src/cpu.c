@@ -50,6 +50,14 @@ int write(
 int run(struct pcb_t * proc) {
 	/* Check if Program Counter point to the proper instruction */
 	if (FLAG) printf("Flag 150\n");
+	if (proc == NULL) printf("proc is empty stupid!\n");
+	else {
+		printf("It not NULL you are more fucking stupid\n");
+		if (proc->code == NULL) printf("proc code is NULL\n");
+		else printf("Proc code is not null\n");
+		printf("Value of programme counter is: %u\n", proc->pc);
+		printf("The size is %u\n", proc->code->size);
+	}
 	if (proc->pc >= proc->code->size) {
 		if (FLAG) printf("Special\n");
 		return 1;
@@ -69,7 +77,7 @@ int run(struct pcb_t * proc) {
 #ifdef MM_PAGING
 		if (FLAG) printf("Flag 145\n");
 		stat = pgalloc(proc, ins.arg_0, ins.arg_1);
-		printf("Flag 144\n");
+		if (FLAG) printf("Flag 144\n");
 
 #else
 		stat = alloc(proc, ins.arg_0, ins.arg_1);

@@ -3,6 +3,8 @@
     "files.associations": {
         "mm.h": "c",
         "stdio.h": "c",
-        "cpu.h": "c"
+        "cpu.h": "c",
+        "paging.c": "c",
+        "typeinfo": "c"
     }
 }

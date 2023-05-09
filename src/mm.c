@@ -7,6 +7,7 @@
 #include "mm.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include "flag.h"
 
 /* 
  * init_pte - Initialize PTE entry
@@ -226,13 +227,13 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
    *in endless procedure of swap-off to get frame and we have not provide 
    *duplicate control mechanism, keep it simple
    */
-  printf("Flag 300\n");
+  if (FLAG) printf("Flag 300\n");
   ret_alloc = alloc_pages_range(caller, incpgnum, frm_lst); // return 0 if successfull incpgnum is number of page need to map
-  printf("Flag 299\n");
-  printf("incpgnum is %d\n", incpgnum);
-  printf("num array %lu\n", incpgnum*sizeof(struct framephy_struct*)/sizeof(frm_lst[0]));
+  if (FLAG) printf("Flag 299\n");
+  if (FLAG) printf("incpgnum is %d\n", incpgnum);
+  if (FLAG) printf("num array %lu\n", incpgnum*sizeof(struct framephy_struct*)/sizeof(frm_lst[0]));
   if (ret_alloc < 0 && ret_alloc != -3000){
-    printf("Flag 298\n");
+    if (FLAG) printf("Flag 298\n");
     return -1;
   }
 
@@ -247,9 +248,9 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
 
   /* it leaves the case of memory is enough but half in ram, half in swap
    * do the swaping all to swapper to get the all in ram */
-  printf("Flag 297\n");
+  if (FLAG) printf("Flag 297\n");
   vmap_page_range(caller, mapstart, incpgnum, frm_lst, ret_rg);
-  printf("Flag 296\n");
+  if (FLAG) printf("Flag 296\n");
 
   return 0;
 }

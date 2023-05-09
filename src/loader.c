@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "flag.h"
 
 static uint32_t avail_pid = 1;
 
@@ -48,6 +49,7 @@ struct pcb_t * load(const char * path) {
 	char opcode[10];
 	proc->code = (struct code_seg_t*)malloc(sizeof(struct code_seg_t));
 	fscanf(file, "%u %u", &proc->priority, &proc->code->size);
+	if (FLAG) printf("--------------------------------------the size in special check is: %u\n", proc->code->size);
 	proc->code->text = (struct inst_t*)malloc(
 		sizeof(struct inst_t) * proc->code->size
 	);
@@ -86,6 +88,3 @@ struct pcb_t * load(const char * path) {
 	}
 	return proc;
 }
-
-
-

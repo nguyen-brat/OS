@@ -64,8 +64,8 @@ static void * cpu_routine(void * args) {
 				if (FLAG) printf("Flag 46\n");
 				continue; /* First load failed. skip dummy load */
             }
-		}else if (proc->pc == proc->code->size) {
-			if (FLAG) printf("Flag 45\n");
+		}else if (proc->pc == proc->code->size) { ///////////////////////////////
+			if (FLAG) printf("Flag 45\n");		  ///////////////////////////////
 			/* The porcess has finish it job */
 			printf("\tCPU %d: Processed %2d has finished\n",
 				id ,proc->pid);
@@ -111,8 +111,11 @@ static void * cpu_routine(void * args) {
 		next_slot(timer_id);
 		if (FLAG) printf("Flag 34\n");
 	}
+	if (FLAG) printf("Flag 33\n");
 	detach_event(timer_id);
+	if (FLAG) printf("Flag 32\n");
 	pthread_exit(NULL);
+	if (FLAG) printf("Flag 31\n");
 }
 
 static void * ld_routine(void * args) {
@@ -126,7 +129,7 @@ static void * ld_routine(void * args) {
 	struct timer_id_t * timer_id = (struct timer_id_t*)args;
 #endif
 	int i = 0;
-	if (FLAG) printf("ld_routine\n");
+	printf("ld_routine\n");
 	while (i < num_processes) {
 		struct pcb_t * proc = load(ld_processes.path[i]);
 #ifdef MLQ_SCHED
