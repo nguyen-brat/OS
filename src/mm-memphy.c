@@ -3,7 +3,6 @@
  * PAGING based Memory Management
  * Memory physical module mm/mm-memphy.c
  */
-
 #include "mm.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -192,7 +191,7 @@ The command line syntax is: MEMPHY_dump <memphy_struct>
 */
 int MEMPHY_dump(struct memphy_struct * mp) // is dump is print all content of memory ?
 {
-    /*TODO dump memphy contnt mp->storage 
+    /*TODO dump memphy contnt mp->storage
      *     for tracing the memory content
      */
     printf("%s\n", mp->storage);

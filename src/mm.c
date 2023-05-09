@@ -106,32 +106,32 @@ The function maps the pages to frames and updates the page table accordingly. It
 int vmap_page_range(struct pcb_t *caller, // process call
                                 int addr, // start address which is aligned to pagesz
                                int pgnum, // num of mapping page
-           struct framephy_struct *frames,// list of the mapped frames
+           struct framephy_struct **frames,// list of the mapped frames
               struct vm_rg_struct *ret_rg)// return mapped region, the real mapped fp
 {                                         // no guarantee all given pages are mapped
   //uint32_t * pte = malloc(sizeof(uint32_t));
-  struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
+  //struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
   //int  fpn;
   int pgit = 0;
   int pgn = PAGING_PGN(addr);
 
   ret_rg->rg_end = ret_rg->rg_start = addr; // at least the very first space is usable
 
-  fpit->fp_next = frames;
+  //fpit->fp_next = frames;
 
   /* TODO map range of frame to address space
    *      [addr to addr + pgnum*PAGING_PAGESZ]
    *      in page table caller->mm->pgd[]
    */
   for (pgit = 0; pgit<pgnum; pgit++){
-    caller->mm->pgd[pgn+pgit] = frames[pgit].fpn;
-    frames[pgit].owner = caller->mm;
-    frames[pgit].fp_next = caller->mram->used_fp_list; // add this phyframe to used fram list
-    caller->mram->used_fp_list = &frames[pgit]; // add this phyframe to used fram list
+    pte_set_fpn(&caller->mm->pgd[pgn + pgit], frames[pgit]->fpn);
+    frames[pgit]->owner = caller->mm;
+    frames[pgit]->fp_next = caller->mram->used_fp_list; // add this phyframe to used fram list
+    caller->mram->used_fp_list = frames[pgit]; // add this phyframe to used fram list
    /* Tracking for later page replacement activities (if needed)
     * Enqueue new usage page */
     enlist_pgn_node(&caller->mm->fifo_pgn, pgn+pgit);
-    ret_rg->rg_end += PAGING_PAGESZ;
+    ret_rg->rg_end += PAGING_PAGESZ - 1;
   }
 
   return 0;
@@ -169,7 +169,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
 { // if both ram and swap full return -1 if only ram full return -3000
   int pgit, fpn;
   //struct framephy_struct *newfp_str;
-  frm_lst = malloc(req_pgnum*sizeof(struct framephy_struct*));
+  //frm_lst = malloc(req_pgnum*sizeof(struct framephy_struct*));
   for(pgit = 0; pgit < req_pgnum; pgit++)
   {
     if(MEMPHY_get_freefp(caller->mram, &fpn) == 0)
@@ -216,7 +216,7 @@ If allocation fails due to lack of memory, the function returns -1. The caller p
 and the number of frames to be allocated are provided as input arguments to this function.*/
 int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int incpgnum, struct vm_rg_struct *ret_rg)
 {
-  struct framephy_struct *frm_lst = NULL;
+  struct framephy_struct** frm_lst = malloc(incpgnum*sizeof(struct framephy_struct*));
   int ret_alloc;
 
   /*@bksysnet: author provides a feasible solution of getting frames
@@ -226,10 +226,15 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
    *in endless procedure of swap-off to get frame and we have not provide 
    *duplicate control mechanism, keep it simple
    */
-  ret_alloc = alloc_pages_range(caller, incpgnum, &frm_lst); // return 0 if successfull incpgnum is number of page need to map
-
-  if (ret_alloc < 0 && ret_alloc != -3000)
+  printf("Flag 300\n");
+  ret_alloc = alloc_pages_range(caller, incpgnum, frm_lst); // return 0 if successfull incpgnum is number of page need to map
+  printf("Flag 299\n");
+  printf("incpgnum is %d\n", incpgnum);
+  printf("num array %lu\n", incpgnum*sizeof(struct framephy_struct*)/sizeof(frm_lst[0]));
+  if (ret_alloc < 0 && ret_alloc != -3000){
+    printf("Flag 298\n");
     return -1;
+  }
 
   /* Out of memory */
   if (ret_alloc == -3000) 
@@ -242,7 +247,9 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
 
   /* it leaves the case of memory is enough but half in ram, half in swap
    * do the swaping all to swapper to get the all in ram */
+  printf("Flag 297\n");
   vmap_page_range(caller, mapstart, incpgnum, frm_lst, ret_rg);
+  printf("Flag 296\n");
 
   return 0;
 }
@@ -299,6 +306,10 @@ int init_mm(struct mm_struct *mm, struct pcb_t *caller)
   vma->sbrk = vma->vm_start;
   struct vm_rg_struct *first_rg = init_vm_rg(vma->vm_start, vma->vm_end);
   enlist_vm_rg_node(&vma->vm_freerg_list, first_rg);
+  // for (int i = 0; i<PAGING_MAX_SYMTBL_SZ; i++) {
+  //   struct vm_rg_struct dump_rg; 
+  //   mm->symrgtbl[i] = dump_rg;
+  // }
 
   vma->vm_next = NULL;
   vma->vm_mm = mm; /*point back to vma owner */
