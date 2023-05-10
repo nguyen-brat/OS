@@ -78,7 +78,6 @@ struct vm_rg_struct *get_symrg_byid(struct mm_struct *mm, int rgid)
 int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr)
 {
   /*Allocate at the toproof */
-  printf("here0\n");
   printf("size %d\n");
   struct vm_rg_struct rgnode; //OK
 
@@ -112,7 +111,6 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   caller->mm->symrgtbl[rgid].rg_end = old_sbrk + size;
 
   *alloc_addr = old_sbrk;
-	printf("here1\n");
   return 0;
 }
 
@@ -125,7 +123,6 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
  */
 int __free(struct pcb_t *caller, int vmaid, int rgid)
 {
-	printf("here2\n");
   struct vm_rg_struct rgnode;
 
   if(rgid < 0 || rgid > PAGING_MAX_SYMTBL_SZ)
@@ -135,7 +132,6 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   rgnode = caller->mm->symrgtbl[rgid];
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
-	printf("here3\n");
   return 0;
 }
 
@@ -174,7 +170,6 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 {
   uint32_t pte = mm->pgd[pgn];
   	printf("%d\n", pgn);
-	printf("here4\n");
   if (!PAGING_PAGE_PRESENT(pte))
   { /* Page is not online, make it actively living */
     int vicpgn, swpfpn; 
@@ -197,7 +192,7 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     /* Copy target frame from swap to mem */
     __swap_cp_page(caller->active_mswp, tgtfpn, caller->active_mswp, PAGING_FPN(caller->mm->pgd[vicpgn]));
 
-    MEMPHY_put_freefp(caller->active_mswp->free_fp_list, tgtfpn);
+    MEMPHY_put_freefp(caller->active_mswp, tgtfpn);
 
     /* Update page table */
     //pte_set_swap() &mm->pgd;
@@ -210,7 +205,6 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     enlist_pgn_node(&caller->mm->fifo_pgn,pgn);
     return 0;
   }
-	printf("here5\n");
   *fpn = PAGING_FPN(pte);
   return 0;
 }
@@ -315,7 +309,6 @@ int pgread(
  */
 int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value)
 {
-	printf("here6\n");
   
   struct vm_rg_struct *currg = get_symrg_byid(caller->mm, rgid);
 
@@ -325,7 +318,6 @@ int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value)
 	  return -1;
 
   pg_setval(caller->mm, currg->rg_start + offset, value, caller);
-	printf("here7\n");
   return 0;
 }
 
