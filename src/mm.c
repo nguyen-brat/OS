@@ -135,7 +135,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       find_victim_page(caller->mm, &vicpgn);
       MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
       __swap_cp_page(caller->mram, PAGING_FPN(caller->mm->pgd[vicpgn]), caller->active_mswp, swpfpn);
-      MEMPHY_put_freefp(caller->mram->free_fp_list, vicpgn);
+      MEMPHY_put_freefp(caller->mram, vicpgn);
       pte_set_swap(&caller->mm->pgd[vicpgn], 0, swpfpn);  
       pgit--;
     } 

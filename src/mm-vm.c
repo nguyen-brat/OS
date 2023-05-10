@@ -71,7 +71,7 @@ struct vm_rg_struct *get_symrg_byid(struct mm_struct *mm, int rgid)
  *@caller: caller
  *@vmaid: ID vm area to alloc memory region
  *@rgid: memory region ID (used to identify variable in symbole table)
- *@size: allocated size 
+ *@size: allocated size (vm size)
  *@alloc_addr: address of allocated memory region
  *
  */
@@ -79,6 +79,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
 {
   /*Allocate at the toproof */
   printf("here0\n");
+  printf("size %d\n");
   struct vm_rg_struct rgnode; //OK
 
   if (get_free_vmrg_area(caller, vmaid, size, &rgnode) == 0)
@@ -315,6 +316,7 @@ int pgread(
 int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value)
 {
 	printf("here6\n");
+  
   struct vm_rg_struct *currg = get_symrg_byid(caller->mm, rgid);
 
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
@@ -437,7 +439,7 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   if (vm_map_ram(caller, area->rg_start, area->rg_end, 
                     old_end, incnumpage , newrg) < 0)
     return -1; /* Map the memory to MEMRAM */
-
+  free(newrg);
   return 0;
 
 }
