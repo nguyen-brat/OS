@@ -17,15 +17,17 @@
 int enlist_vm_freerg_list(struct mm_struct *mm, struct vm_rg_struct rg_elmt)
 {
   struct vm_rg_struct *rg_node = mm->mmap->vm_freerg_list;
+  struct vm_rg_struct *new_rg = malloc(sizeof(struct vm_rg_struct));
+  new_rg->rg_start = rg_elmt.rg_start;
+  new_rg->rg_end = rg_elmt.rg_end;
 
   if (rg_elmt.rg_start >= rg_elmt.rg_end)
     return -1;
 
-  if (rg_node != NULL)
-    rg_elmt.rg_next = rg_node;
+  if (rg_node != NULL) new_rg->rg_next = rg_node;
 
   /* Enlist the new region */
-  mm->mmap->vm_freerg_list = &rg_elmt;
+  mm->mmap->vm_freerg_list = new_rg;
 
   return 0;
 }
@@ -78,14 +80,12 @@ struct vm_rg_struct *get_symrg_byid(struct mm_struct *mm, int rgid)
 int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr)
 {
   /*Allocate at the toproof */
-  printf("size %d\n");
   struct vm_rg_struct rgnode; //OK
 
   if (get_free_vmrg_area(caller, vmaid, size, &rgnode) == 0)
   {
     caller->mm->symrgtbl[rgid].rg_start = rgnode.rg_start;
     caller->mm->symrgtbl[rgid].rg_end = rgnode.rg_end;
-
     *alloc_addr = rgnode.rg_start;
 
     return 0;
@@ -97,23 +97,28 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid); //OK
   int inc_sz = PAGING_PAGE_ALIGNSZ(size); //OK
   //int inc_limit_ret
-  int old_sbrk; //OK
+  int old_sbrk, old_end; //OK
 
   old_sbrk = cur_vma->sbrk; //OK
-
+	old_end = cur_vma->vm_end;
   /* TODO INCREASE THE LIMIT
    * inc_vma_limit(caller, vmaid, inc_sz)
    */
   inc_vma_limit(caller, vmaid, inc_sz); //OK
 
   /*Successful increase limit */
-  caller->mm->symrgtbl[rgid].rg_start = old_sbrk; //OK
-  caller->mm->symrgtbl[rgid].rg_end = old_sbrk + size;
+  struct vm_rg_struct new_free_rg;
+  	caller->mm->symrgtbl[rgid].rg_start = old_end; //OK
+  	caller->mm->symrgtbl[rgid].rg_end = old_end + size;
+	  new_free_rg.rg_start = old_end + size;
+	  new_free_rg.rg_end = cur_vma->vm_end;
+  enlist_vm_freerg_list(caller->mm, new_free_rg);
 
-  *alloc_addr = old_sbrk;
+  cur_vma->sbrk = old_end + size;
+
+  *alloc_addr = old_end;
   return 0;
 }
-
 /*__free - remove a region memory
  *@caller: caller
  *@vmaid: ID vm area to alloc memory region
@@ -169,11 +174,9 @@ int pgfree_data(struct pcb_t *proc, uint32_t reg_index)
 int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 {
   uint32_t pte = mm->pgd[pgn];
-  	printf("%d\n", pgn);
   if (!PAGING_PAGE_PRESENT(pte))
   { /* Page is not online, make it actively living */
     int vicpgn, swpfpn; 
-    int vicfpn = PAGING_FPN(mm->pgd[vicpgn]);
     //uint32_t vicpte;
 
     int tgtfpn = PAGING_SWP(pte);//the target frame storing our variable
@@ -181,6 +184,7 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     /* TODO: Play with your paging theory here */
     /* Find victim page */
     find_victim_page(caller->mm, &vicpgn);
+    int vicfpn = PAGING_FPN(mm->pgd[vicpgn]);
 
     /* Get free frame in MEMSWP */
     MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
@@ -188,9 +192,9 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 
     /* Do swap frame from MEMRAM to MEMSWP and vice versa*/
     /* Copy victim frame to swap */
-    __swap_cp_page(caller->mram, PAGING_FPN(mm->pgd[vicpgn]), caller->active_mswp, swpfpn);
+    __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
     /* Copy target frame from swap to mem */
-    __swap_cp_page(caller->active_mswp, tgtfpn, caller->active_mswp, PAGING_FPN(caller->mm->pgd[vicpgn]));
+    __swap_cp_page(caller->active_mswp, tgtfpn, caller->active_mswp, vicfpn);
 
     MEMPHY_put_freefp(caller->active_mswp, tgtfpn);
 
@@ -202,9 +206,10 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     //pte_set_fpn() & mm->pgd[pgn];
     pte_set_fpn(&mm->pgd[pgn], vicfpn);
     *fpn = vicfpn;
-    enlist_pgn_node(&caller->mm->fifo_pgn,pgn);
+    enlist_pgn_node(&caller->mm->fifo_pgn, pgn);
     return 0;
   }
+
   *fpn = PAGING_FPN(pte);
   return 0;
 }
@@ -309,7 +314,6 @@ int pgread(
  */
 int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value)
 {
-  
   struct vm_rg_struct *currg = get_symrg_byid(caller->mm, rgid);
 
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
@@ -471,7 +475,6 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
 
   struct vm_rg_struct *rgit = cur_vma->vm_freerg_list;
-
   if (rgit == NULL)
     return -1;
 

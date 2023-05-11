@@ -99,7 +99,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
 		pte_set_fpn(&caller->mm->pgd[pgn], fpit->fpn);
 		fpit = fpit->fp_next;
 		addr += PAGING_PAGESZ;
-		ret_rg->rg_end = addr + PAGING_PAGESZ;
+		ret_rg->rg_end = addr;
    	enlist_pgn_node(&caller->mm->fifo_pgn, pgn);
   }
 
@@ -118,7 +118,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
 int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struct** frm_lst)
 {
   int pgit, fpn;
-  struct framephy_struct dummy_head;
+  struct framephy_struct dummy_head = { .fp_next = NULL };
   struct framephy_struct *newfp_str = &dummy_head;
 
   for(pgit = 0; pgit < req_pgnum; pgit++)
