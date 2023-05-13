@@ -157,11 +157,21 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
 
 int MEMPHY_dump(struct memphy_struct * mp)
 {
-    /*TODO dump memphy contnt mp->storage 
-     *     for tracing the memory content
-     */
-    
-    return 0;
+   /*TODO dump memphy contnt mp->storage
+    *     for tracing the memory content
+    */
+   int i;
+
+   printf("=== Content of memphy_struct ===\n");
+   for(i = 0; i < mp->maxsz; i++){
+      if(mp->storage[i] != '\0')
+      {
+         printf("%c\n", mp->storage[i]);
+      }
+   }
+   printf("=== End of memphy_struct's content ===\n");
+
+   return 0;
 }
 
 int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
