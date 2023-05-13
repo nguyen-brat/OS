@@ -4,7 +4,6 @@
 #include "sched.h"
 #include "loader.h"
 #include "mm.h"
-#include "flag.h"
 
 #include <pthread.h>
 #include <stdio.h>
@@ -44,7 +43,6 @@ struct cpu_args {
 
 
 static void * cpu_routine(void * args) {
-	if (FLAG) printf("Flag 50\n");
 	struct timer_id_t * timer_id = ((struct cpu_args*)args)->timer_id;
 	int id = ((struct cpu_args*)args)->id;
 	/* Check for new process in ready queue */
@@ -53,48 +51,36 @@ static void * cpu_routine(void * args) {
 	while (1) {
 		/* Check the status of current process */
 		if (proc == NULL) {
-			if (FLAG) printf("Flag 49\n");
 			/* No process is running, the we load new process from
 		 	* ready queue */
 			proc = get_proc();
-			if (FLAG) printf("Flag 48\n");
 			if (proc == NULL) {
-				if (FLAG) printf("Flag 47\n");
-				next_slot(timer_id);
-				if (FLAG) printf("Flag 46\n");
-				continue; /* First load failed. skip dummy load */
-            }
-		}else if (proc->pc == proc->code->size) { ///////////////////////////////
-			if (FLAG) printf("Flag 45\n");		  ///////////////////////////////
+                           next_slot(timer_id);
+                           continue; /* First load failed. skip dummy load */
+                        }
+		}else if (proc->pc == proc->code->size) {
 			/* The porcess has finish it job */
 			printf("\tCPU %d: Processed %2d has finished\n",
 				id ,proc->pid);
-			if (FLAG) printf("Flag 44\n");
 			free(proc);
-			if (FLAG) printf("Flag 43\n");
 			proc = get_proc();
-			if (FLAG) printf("Flag 42\n");
 			time_left = 0;
 		}else if (time_left == 0) {
-			if (FLAG) printf("Flag 41\n");
 			/* The process has done its job in current time slot */
 			printf("\tCPU %d: Put process %2d to run queue\n",
 				id, proc->pid);
 			put_proc(proc);
-			if (FLAG) printf("Flag 40\n");
 			proc = get_proc();
-			if (FLAG) printf("Flag 39\n");
 		}
-		if (FLAG) printf("Flag 38\n");
+		
 		/* Recheck process status after loading new process */
 		if (proc == NULL && done) {
 			/* No process to run, exit */
-			if (FLAG) printf("\tCPU %d stopped\n", id);
+			printf("\tCPU %d stopped\n", id);
 			break;
 		}else if (proc == NULL) {
 			/* There may be new processes to run in
 			 * next time slots, just skip current slot */
-			if (FLAG) printf("Flag 37\n");
 			next_slot(timer_id);
 			continue;
 		}else if (time_left == 0) {
@@ -104,23 +90,16 @@ static void * cpu_routine(void * args) {
 		}
 		
 		/* Run current process */
-		if (FLAG) printf("Flag 36\n");
 		run(proc);
-		if (FLAG) printf("Flag 35\n");
 		time_left--;
 		next_slot(timer_id);
-		if (FLAG) printf("Flag 34\n");
 	}
-	if (FLAG) printf("Flag 33\n");
 	detach_event(timer_id);
-	if (FLAG) printf("Flag 32\n");
 	pthread_exit(NULL);
-	if (FLAG) printf("Flag 31\n");
 }
 
 static void * ld_routine(void * args) {
 #ifdef MM_PAGING
-	if (FLAG) printf("Flag 99\n");
 	struct memphy_struct* mram = ((struct mmpaging_ld_args *)args)->mram;
 	struct memphy_struct** mswp = ((struct mmpaging_ld_args *)args)->mswp;
 	struct memphy_struct* active_mswp = ((struct mmpaging_ld_args *)args)->active_mswp;
@@ -133,13 +112,10 @@ static void * ld_routine(void * args) {
 	while (i < num_processes) {
 		struct pcb_t * proc = load(ld_processes.path[i]);
 #ifdef MLQ_SCHED
-		if (FLAG) printf("Flag 98\n");
 		proc->prio = ld_processes.prio[i];
 #endif
 		while (current_time() < ld_processes.start_time[i]) {
-			if (FLAG) printf("Flag 97\n");
 			next_slot(timer_id);
-			if (FLAG) printf("Flag 96\n");
 		}
 #ifdef MM_PAGING
 		proc->mm = malloc(sizeof(struct mm_struct));
@@ -147,27 +123,18 @@ static void * ld_routine(void * args) {
 		proc->mram = mram;
 		proc->mswp = mswp;
 		proc->active_mswp = active_mswp;
-		if (FLAG) printf("Flag 95\n");
 #endif
 		printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
 			ld_processes.path[i], proc->pid, ld_processes.prio[i]);
-		if (FLAG) printf("Flag 94\n");
 		add_proc(proc);
-		if (FLAG) printf("Flag 93\n");
 		free(ld_processes.path[i]);
-		if (FLAG) printf("Flag 92\n");
 		i++;
 		next_slot(timer_id);
-		if (FLAG) printf("Flag 91\n");
 	}
-	if (FLAG) printf("Flag 90\n");
 	free(ld_processes.path);
-	if (FLAG) printf("Flag 89\n");
 	free(ld_processes.start_time);
-	if (FLAG) printf("Flag 88\n");
 	done = 1;
 	detach_event(timer_id);
-	if (FLAG) printf("Flag 87\n");
 	pthread_exit(NULL);
 }
 
@@ -227,7 +194,6 @@ static void read_config(const char * path) {
 
 int main(int argc, char * argv[]) {
 	/* Read config */
-	if (FLAG) printf("Flag 0\n");
 	if (argc != 2) {
 		printf("Usage: os [path to configure file]\n");
 		return 1;
@@ -239,13 +205,11 @@ int main(int argc, char * argv[]) {
 	read_config(path);
 
 	pthread_t * cpu = (pthread_t*)malloc(num_cpus * sizeof(pthread_t));
-	if (FLAG) printf("Flag 1\n");
 	struct cpu_args * args =
 		(struct cpu_args*)malloc(sizeof(struct cpu_args) * num_cpus);
 	pthread_t ld;
 	
 	/* Init timer */
-	if (FLAG) printf("Flag 2\n");
 	int i;
 	for (i = 0; i < num_cpus; i++) {
 		args[i].timer_id = attach_event();
@@ -253,7 +217,6 @@ int main(int argc, char * argv[]) {
 	}
 	struct timer_id_t * ld_event = attach_event();
 	start_timer();
-	if (FLAG) printf("Flag 3\n");
 
 #ifdef MM_PAGING
 	/* Init all MEMPHY include 1 MEMRAM and n of MEMSWP */
@@ -283,11 +246,10 @@ int main(int argc, char * argv[]) {
 
 	/* Init scheduler */
 	init_scheduler();
-	if (FLAG) printf("Flag 4\n");
+
 	/* Run CPU and loader */
 #ifdef MM_PAGING
 	pthread_create(&ld, NULL, ld_routine, (void*)mm_ld_args);
-	if (FLAG) printf("Flag 5\n");
 #else
 	pthread_create(&ld, NULL, ld_routine, (void*)ld_event);
 #endif
@@ -295,11 +257,11 @@ int main(int argc, char * argv[]) {
 		pthread_create(&cpu[i], NULL,
 			cpu_routine, (void*)&args[i]);
 	}
+
 	/* Wait for CPU and loader finishing */
 	for (i = 0; i < num_cpus; i++) {
 		pthread_join(cpu[i], NULL);
 	}
-	if (FLAG) printf("Flag 6\n");
 	pthread_join(ld, NULL);
 
 	/* Stop timer */

@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include "loader.h"
 #include <stdio.h>
+
 int main() {
 	struct pcb_t * ld = load("input/p0");
 	struct pcb_t * proc = load("input/p0");
@@ -14,3 +15,4 @@ int main() {
 	dump();
 	return 0;
 }
+
