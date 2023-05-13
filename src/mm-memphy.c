@@ -155,13 +155,8 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
    return 0;
 }
 
-int MEMPHY_dump(struct memphy_struct * mp) // is dump is print all content of memory ?
+int MEMPHY_dump(struct memphy_struct * mp)
 {
-    /*TODO dump memphy contnt mp->storage
-     *     for tracing the memory content
-     */
-    printf("%s\n", mp->storage);
-    return 0;
    /*TODO dump memphy contnt mp->storage
     *     for tracing the memory content
     */
