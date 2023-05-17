@@ -75,6 +75,35 @@ int pte_set_fpn(uint32_t *pte, int fpn)
   return 0;
 }
 
+int remove_used_frame(struct memphy_struct* ram, int fpn){
+  struct framephy_struct * ps = ram->used_fp_list;
+  struct framephy_struct * pivot;
+  if (ps == NULL)
+    return -1;
+  if (ps->fpn == fpn){
+    ram->used_fp_list = ps->fp_next; // remove from used list
+    ps->fp_next = ram->free_fp_list; // ad it to free list
+    ram->free_fp_list = ps; // make it the head
+    return 0;
+  }
+  while(ps->fp_next){
+    if (ps->fpn == fpn){
+      if (ps->fp_next->fp_next){ // frame need remove is not tail
+        pivot = ps->fp_next;
+        ps->fp_next = pivot->fp_next; // remove it from used list
+        pivot->fp_next = ram->free_fp_list; // add it to free list
+        ram->free_fp_list = pivot; // make it the head of free list
+      } else{ // it is the tail
+        ps->fp_next->fp_next = ram->free_fp_list;
+        ram->free_fp_list = ps->fp_next;
+        ps->fp_next = NULL;
+      }
+      return 0;
+    }
+    ps = ps->fp_next;
+  }
+  return -1;
+}
 
 /* 
  * vmap_page_range - map a range of page at aligned address
@@ -95,9 +124,12 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      in page table caller->mm->pgd[]
    */
   for(pgit; pgit < pgnum; pgit++) {
+    struct framephy_struct * np = fpit->fp_next;
+    fpit->fp_next = caller->mram->used_fp_list; // add the frame to the used list
+    caller->mram->used_fp_list = fpit; // add the frame to the used list
     int pgn = PAGING_PGN(addr);
 		pte_set_fpn(&caller->mm->pgd[pgn], fpit->fpn);
-		fpit = fpit->fp_next;
+		fpit = np;
 		addr += PAGING_PAGESZ;
 		ret_rg->rg_end = addr;
    	enlist_pgn_node(&caller->mm->fifo_pgn, pgn);
@@ -133,10 +165,15 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
 			// Implement page replacement
       int vicpgn, swpfpn; 
       find_victim_page(caller->mm, &vicpgn);
-      MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
+      if (MEMPHY_get_freefp(caller->active_mswp, &swpfpn) != 0){
+        return -1;
+      }
+      if (remove_used_frame(caller->mram, PAGING_FPN(caller->mm->pgd[vicpgn])) == -1){
+        perror("can't find the frame number in ram");
+      }
       __swap_cp_page(caller->mram, PAGING_FPN(caller->mm->pgd[vicpgn]), caller->active_mswp, swpfpn);
-      MEMPHY_put_freefp(caller->mram, vicpgn);
-      pte_set_swap(&caller->mm->pgd[vicpgn], 0, swpfpn);  
+      //MEMPHY_put_freefp(caller->mram, vicpgn);
+      pte_set_swap(&caller->mm->pgd[vicpgn], 0, swpfpn);
       pgit--;
     } 
   }

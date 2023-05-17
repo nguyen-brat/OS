@@ -126,7 +126,7 @@ static void * ld_routine(void * args) {
 #endif
 		printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
 			ld_processes.path[i], proc->pid, ld_processes.prio[i]);
-		add_proc(proc);
+		add_proc(proc); // add process to mlq ready queue
 		free(ld_processes.path[i]);
 		i++;
 		next_slot(timer_id);
