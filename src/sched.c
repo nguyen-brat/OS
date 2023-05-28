@@ -8,6 +8,7 @@
 static struct queue_t ready_queue;
 static struct queue_t run_queue;
 static pthread_mutex_t queue_lock;
+static int queue_iterator = 0;
 
 #ifdef MLQ_SCHED
 static struct queue_t mlq_ready_queue[MAX_PRIO];
@@ -42,33 +43,26 @@ void init_scheduler(void) {
  *  We implement stateful here using transition technique
  *  State representation   prio = 0 .. MAX_PRIO, curr_slot = 0..(MAX_PRIO - prio)
  */
-// struct pcb_t * get_mlq_proc(void) {
-// 	struct pcb_t * proc = NULL;
-// 	/*TODO: get a process from PRIORITY [ready_queue].
-// 	 * Remember to use lock to protect the queue.
-// 	 * */
-
-// 	pthread_mutex_lock(&queue_lock);
-// 	for(int i=0; i<MAX_PRIO; i++) {
-// 		if(!empty(&mlq_ready_queue[i])) {
-// 			proc = dequeue(&mlq_ready_queue[i]);
-// 			break;
-// 		}
-// 	}
-// 	pthread_mutex_unlock(&queue_lock);	
-// 	return proc;	
-// }
-
-struct pcb_t * get_mlq_proc(void* slot) {
+struct pcb_t * get_mlq_proc(int* timeslot) {
 	struct pcb_t * proc = NULL;
-	int queue_slot = (int) slot;
 	/*TODO: get a process from PRIORITY [ready_queue].
 	 * Remember to use lock to protect the queue.
 	 * */
+
 	pthread_mutex_lock(&queue_lock);
-	proc = dequeue(&mlq_ready_queue[queue_slot]);
-	pthread_mutex_unlock(&queue_lock);
-	return proc;
+	while(1) {
+		if(!empty(&mlq_ready_queue[queue_iterator])) {
+			proc = dequeue(&mlq_ready_queue[queue_iterator]);
+			*timeslot = MAX_PRIO - proc->prio;
+			queue_iterator = (queue_iterator + 1) % MAX_PRIO;
+			pthread_mutex_unlock(&queue_lock);	
+			return proc;
+		}
+		queue_iterator = (queue_iterator + 1) % MAX_PRIO;
+		if(queue_iterator == 0) break;
+	}
+	pthread_mutex_unlock(&queue_lock);	
+	return proc;	
 }
 
 void put_mlq_proc(struct pcb_t * proc) {
@@ -83,8 +77,8 @@ void add_mlq_proc(struct pcb_t * proc) {
 	pthread_mutex_unlock(&queue_lock);	
 }
 
-struct pcb_t * get_proc(void* slot) {
-	return get_mlq_proc(slot);
+struct pcb_t * get_proc(int* timeslot) {
+	return get_mlq_proc(timeslot);
 }
 
 void put_proc(struct pcb_t * proc) {
@@ -115,5 +109,4 @@ void add_proc(struct pcb_t * proc) {
 	pthread_mutex_unlock(&queue_lock);	
 }
 #endif
-
 

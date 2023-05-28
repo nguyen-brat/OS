@@ -48,30 +48,29 @@ static void * cpu_routine(void * args) {
 	/* Check for new process in ready queue */
 	int time_left = 0;
 	struct pcb_t * proc = NULL;
-	int slot = 0;
 	while (1) {
 		/* Check the status of current process */
 		if (proc == NULL) {
 			/* No process is running, the we load new process from
 		 	* ready queue */
-			proc = get_proc();
+			proc = get_proc(&time_slot);
 			if (proc == NULL) {
-                           next_slot(timer_id);
-                           continue; /* First load failed. skip dummy load */
-                        }
+				next_slot(timer_id);
+				continue; /* First load failed. skip dummy load */
+			}
 		}else if (proc->pc == proc->code->size) {
 			/* The porcess has finish it job */
 			printf("\tCPU %d: Processed %2d has finished\n",
 				id ,proc->pid);
 			free(proc);
-			proc = get_proc();
+			proc = get_proc(&time_slot);
 			time_left = 0;
 		}else if (time_left == 0) {
 			/* The process has done its job in current time slot */
-			printf("\tCPU %d: Put process %2d to ready queue queue\n",
+			printf("\tCPU %d: Put process %2d to run queue\n",
 				id, proc->pid);
 			put_proc(proc);
-			proc = get_proc();
+			proc = get_proc(&time_slot);
 		}
 		
 		/* Recheck process status after loading new process */
@@ -127,7 +126,7 @@ static void * ld_routine(void * args) {
 #endif
 		printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
 			ld_processes.path[i], proc->pid, ld_processes.prio[i]);
-		add_proc(proc); // add process to mlq ready queue
+		add_proc(proc);
 		free(ld_processes.path[i]);
 		i++;
 		next_slot(timer_id);
@@ -271,6 +270,5 @@ int main(int argc, char * argv[]) {
 	return 0;
 
 }
-
 
 
