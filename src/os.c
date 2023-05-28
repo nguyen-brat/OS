@@ -48,6 +48,7 @@ static void * cpu_routine(void * args) {
 	/* Check for new process in ready queue */
 	int time_left = 0;
 	struct pcb_t * proc = NULL;
+	int slot = 0;
 	while (1) {
 		/* Check the status of current process */
 		if (proc == NULL) {
@@ -67,7 +68,7 @@ static void * cpu_routine(void * args) {
 			time_left = 0;
 		}else if (time_left == 0) {
 			/* The process has done its job in current time slot */
-			printf("\tCPU %d: Put process %2d to run queue\n",
+			printf("\tCPU %d: Put process %2d to ready queue queue\n",
 				id, proc->pid);
 			put_proc(proc);
 			proc = get_proc();

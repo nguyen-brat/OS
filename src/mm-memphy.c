@@ -162,21 +162,21 @@ int MEMPHY_dump(struct memphy_struct * mp)
     *     for tracing the memory content
     */
    int i;
-   // printf("=== Content of memphy_struct ===\n");
-   // for(i = 0; i < mp->maxsz; i++){
-   //    if(mp->storage[i] != '\0')
-   //    {
-   //       printf("%c\n", mp->storage[i]);
-   //    }
-   // }
-   //printf("=== End of memphy_struct's content ===\n");
    printf("=== Content of memphy_struct ===\n");
-   struct framephy_struct * pointer = mp->used_fp_list;
-   while (pointer){
-      printf("%d ", pointer->fpn);
-      pointer = pointer->fp_next;
+   for(i = 0; i < mp->maxsz; i++){
+      if(mp->storage[i] != '\0')
+      {
+         printf("%c\n", mp->storage[i]);
+      }
    }
-   printf("\n=== End of memphy_struct's content ===\n");
+   printf("=== End of memphy_struct's content ===\n");
+   // printf("=== Content of memphy_struct ===\n");
+   // struct framephy_struct * pointer = mp->used_fp_list;
+   // while (pointer){
+   //    printf("%d ", pointer->fpn);
+   //    pointer = pointer->fp_next;
+   // }
+   // printf("\n=== End of memphy_struct's content ===\n");
    return 0;
 }
 
