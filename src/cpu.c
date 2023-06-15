@@ -14,7 +14,7 @@ int alloc(struct pcb_t * proc, uint32_t size, uint32_t reg_index) {
 	}else{
 		proc->regs[reg_index] = addr;
 		return 0;
-	}
+	} 
 }
 
 int free_data(struct pcb_t * proc, uint32_t reg_index) {
